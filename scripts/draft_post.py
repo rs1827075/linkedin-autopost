@@ -1,11 +1,14 @@
+cat > /home/claude/linkedin-content-bot/scripts/draft_post.py << 'PYEOF'
 """
-Reads state/new_items.json (written by fetch_sources.py) and asks Claude
-to draft one LinkedIn post per item. Each draft is written to drafts/
-as a markdown file for a human to review, edit, and approve via PR merge.
+Reads state/new_items.json (written by fetch_sources.py) and asks Gemini
+(free tier) to draft one LinkedIn post per item. Each draft is written to
+drafts/ as a markdown file for a human to review, edit, and approve via PR
+merge.
 
 This script never posts to LinkedIn. It only drafts.
 
-Required env var: ANTHROPIC_API_KEY
+Required env var: GEMINI_API_KEY (free, no credit card - get one at
+https://aistudio.google.com/app/apikey)
 """
 import datetime
 import json
@@ -14,11 +17,13 @@ import pathlib
 import re
 import sys
 
-import anthropic
+from google import genai
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 NEW_ITEMS_FILE = ROOT / "state" / "new_items.json"
 DRAFTS_DIR = ROOT / "drafts"
+
+MODEL = "gemini-2.5-flash"  # free tier: ~10 requests/min, 250 requests/day
 
 SYSTEM_PROMPT = """You draft LinkedIn posts for a Senior Software Engineer \
 specializing in Salesforce (Financial Services Cloud, Apex, LWC, Agentforce, \
@@ -38,7 +43,8 @@ hashtag spam (3-5 relevant hashtags at the very end is fine).
 - Do not fabricate a "verified" or "confirmed" tone - if something is \
 uncertain, say so plainly instead of asserting it.
 
-Output strict JSON with two keys:
+Respond with STRICT JSON only, no markdown fences, no preamble, with \
+exactly two keys:
   "post": the full LinkedIn post text
   "image_brief": one sentence describing a simple, non-infringing visual \
 that would suit this post (e.g. a code snippet card, a before/after \
@@ -61,7 +67,7 @@ def main():
         print("No new items to draft.")
         return
 
-    client = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
+    client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
     DRAFTS_DIR.mkdir(exist_ok=True)
 
     for item in items:
@@ -72,16 +78,15 @@ def main():
             f"Summary/excerpt: {item['summary']}"
         )
 
-        response = client.messages.create(
-            model="claude-sonnet-5",
-            max_tokens=1000,
-            system=SYSTEM_PROMPT,
-            messages=[{"role": "user", "content": f"Source material:\n\n{source_material}"}],
+        response = client.models.generate_content(
+            model=MODEL,
+            contents=f"Source material:\n\n{source_material}",
+            config={
+                "system_instruction": SYSTEM_PROMPT,
+                "response_mime_type": "application/json",
+            },
         )
-        raw_text = "".join(
-            block.text for block in response.content if block.type == "text"
-        )
-        raw_text = raw_text.strip().removeprefix("```json").removeprefix("```").removesuffix("```").strip()
+        raw_text = (response.text or "").strip()
 
         try:
             data = json.loads(raw_text)
