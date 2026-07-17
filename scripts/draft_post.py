@@ -1,4 +1,3 @@
-cat > /home/claude/linkedin-content-bot/scripts/draft_post.py << 'PYEOF'
 """
 Reads state/new_items.json (written by fetch_sources.py) and asks Gemini
 (free tier) to draft one LinkedIn post per item. Each draft is written to
