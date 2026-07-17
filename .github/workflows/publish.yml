@@ -1,0 +1,48 @@
+name: Publish approved LinkedIn post
+
+# Fires only when a PR touching drafts/*.md is MERGED - i.e. only after a
+# human reviewed it. Merging the PR IS the approval step.
+on:
+  pull_request:
+    types: [closed]
+    paths:
+      - "drafts/*.md"
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    # Optional extra gate: create a GitHub Environment named "linkedin-publish"
+    # with a required reviewer under Settings > Environments, then uncomment
+    # the line below for a second manual click before anything posts.
+    # environment: linkedin-publish
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - run: pip install -r requirements.txt
+
+      - name: Find which draft file(s) changed in this PR
+        id: changed
+        uses: tj-actions/changed-files@v44
+        with:
+          files: drafts/*.md
+
+      - name: Publish each newly-merged draft
+        if: steps.changed.outputs.any_changed == 'true'
+        env:
+          LINKEDIN_ACCESS_TOKEN: ${{ secrets.LINKEDIN_ACCESS_TOKEN }}
+          LINKEDIN_PERSON_URN: ${{ secrets.LINKEDIN_PERSON_URN }}
+        run: |
+          for f in ${{ steps.changed.outputs.all_changed_files }}; do
+            echo "Publishing $f"
+            python scripts/post_to_linkedin.py "$f"
+          done

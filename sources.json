@@ -1,0 +1,13 @@
+{
+  "feeds": [
+    {
+      "name": "Salesforce Developers Blog",
+      "url": "https://developer.salesforce.com/blogs/feed"
+    },
+    {
+      "name": "Salesforce Release Notes (Trailblazer Community RSS)",
+      "url": "https://help.salesforce.com/rss/releaseNotes.rss"
+    }
+  ],
+  "max_items_per_run": 3
+}
