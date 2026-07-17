@@ -22,4 +22,4 @@ A clean, minimalist abstract graphic showing connected nodes representing data f
 
 <!-- paste an image URL or leave blank -->
 
-<img width="1680" height="944" alt="Clean minimalist abstract graphic showing connected nodes representing data flow between an external client and a central Salesforce core, modern tech illustration with flowing lines connecting geometric nodes, professional software archite" src="https://github.com/user-attachments/assets/f19c3457-6b48-47e0-89bc-b042f871b357" />
+https://kommodo.ai/i/Ihu6OsOKUn58ZQKokIUW
