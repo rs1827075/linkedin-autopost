@@ -22,7 +22,7 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 NEW_ITEMS_FILE = ROOT / "state" / "new_items.json"
 DRAFTS_DIR = ROOT / "drafts"
 
-MODEL = "gemini-2.5-flash"  # free tier: ~10 requests/min, 250 requests/day
+MODEL = "gemini-flash-lite-latest"  # free-tier available; auto-tracks newest Flash-Lite
 
 SYSTEM_PROMPT = """You draft LinkedIn posts for a Senior Software Engineer \
 specializing in Salesforce (Financial Services Cloud, Apex, LWC, Agentforce, \
