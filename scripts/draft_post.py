@@ -22,7 +22,7 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 NEW_ITEMS_FILE = ROOT / "state" / "new_items.json"
 DRAFTS_DIR = ROOT / "drafts"
 
-MODEL = "gemini-flash-lite-latest"  # free-tier available; auto-tracks newest Flash-Lite
+MODEL = "gemini-flash-lite-latest"  # free tier
 
 SYSTEM_PROMPT = """You draft LinkedIn posts for a Senior Software Engineer \
 specializing in Salesforce (Financial Services Cloud, Apex, LWC, Agentforce, \
@@ -30,21 +30,37 @@ integrations). Voice: informative, first-person, practical - explains what \
 changed, why it matters, and a concrete use case or two. Ends by inviting \
 readers to share their own use cases or thoughts.
 
-Hard rules:
-- You only know what is in the "source material" the user gives you. \
-Do not add facts, version numbers, dates, or claims that are not in that \
-material. If the source material is thin, write a shorter, more cautious \
-post rather than filling gaps from general knowledge.
+FORMATTING - this is a strict requirement, not a suggestion:
+- Write 4-7 SHORT paragraphs, each 1-3 sentences.
+- Separate every paragraph with a blank line (two newline characters, \\n\\n).
+- Never output the post as one continuous block of text. If you catch \
+yourself writing a paragraph longer than 3 sentences, break it up.
+- Put the hashtags on their own final line, not folded into the last paragraph.
+
+GROUNDING - this is the most important rule:
+- You only know what is in the "source material" the user gives you. That \
+is usually just a short RSS summary, not the full article.
+- Do NOT state specifics that are not literally present in the source \
+material - no invented GA/release dates, no invented migration steps, no \
+invented product or capability names beyond what's given. If the source \
+material doesn't say a feature is "generally available," don't say that \
+either.
+- If the source material is thin, write a SHORTER, more hedged post ("early \
+signals suggest...", "worth keeping an eye on...") rather than inventing \
+specifics to sound more authoritative.
 - Never quote the source material directly for more than a few words at a \
 time - paraphrase in your own words throughout.
-- 150-300 words. Plain text, no markdown formatting, sentence case, no \
-hashtag spam (3-5 relevant hashtags at the very end is fine).
+
+OTHER RULES:
+- 150-300 words total. Sentence case, no ALL CAPS, no emoji.
+- 3-5 relevant hashtags at the very end only.
 - Do not fabricate a "verified" or "confirmed" tone - if something is \
 uncertain, say so plainly instead of asserting it.
 
 Respond with STRICT JSON only, no markdown fences, no preamble, with \
 exactly two keys:
-  "post": the full LinkedIn post text
+  "post": the full LinkedIn post text, WITH the \\n\\n paragraph breaks \
+described above actually included as characters in the string
   "image_brief": one sentence describing a simple, non-infringing visual \
 that would suit this post (e.g. a code snippet card, a before/after \
 diagram) - never a request to depict a real person, logo, or branded UI.
@@ -83,6 +99,7 @@ def main():
             config={
                 "system_instruction": SYSTEM_PROMPT,
                 "response_mime_type": "application/json",
+                "temperature": 0.5,
             },
         )
         raw_text = (response.text or "").strip()
